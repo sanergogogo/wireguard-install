@@ -123,8 +123,8 @@ ANSWERS
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
 
 ## 端口被封
-```bash
 国内固定端口容易被封，可以添加一个定时任务，根据每天的日期更换端口号
+```bash
 1 0 * * * sudo wg set wg0 listen-port 558$(date +\%d)
 ```
 
