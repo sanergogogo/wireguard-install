@@ -122,6 +122,12 @@ ANSWERS
 
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
 
+## 端口被封
+```bash
+国内固定端口容易被封，可以添加一个定时任务，根据每天的日期更换端口号
+1 0 * * * sudo wg set wg0 listen-port 558$(date +\%d)
+```
+
 ## 致谢
 
 此脚本基于 [Nyr 和 contributors](https://github.com/Nyr/wireguard-install) 的出色工作，并进行了增强和更改以与 [Setup IPsec VPN](https://github.com/hwdsl2/setup-ipsec-vpn) 项目兼容。
