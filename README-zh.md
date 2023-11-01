@@ -125,7 +125,93 @@ ANSWERS
 ## 端口被封
 国内固定端口容易被封，可以添加一个定时任务，根据每天的日期更换端口号
 ```bash
-1 0 * * * sudo wg set wg0 listen-port 558$(date +\%d)
+#!/bin/bash
+
+listening_port=$(echo "$wg_output" | awk '/listening port:/{print $3}')
+
+# 构建新的端口
+new_port="${listening_port:0:3}$(date +\%d)"
+
+wg set wg0 listen-port "$new_port"
+```
+有可能当天的端口也被封了，可以每5分钟检查一下是否有流量，没有就换端口
+```
+#!/bin/bash
+
+# Run the "wg show" command and capture its output
+wg_output=$(wg show)
+
+# Set a flag to indicate if a peer with a recent handshake is found
+peer_found=false
+
+time_to_seconds() {
+    local time_str="$1"
+    local seconds=0
+
+    # Remove commas and extra spaces, and split the string into words
+    time_str=$(echo "$time_str" | tr ',' '\n' | sed -e 's/^[ \t]*//')
+
+    while read -r value; do
+        if [[ $value == *seconds\ ago ]]; then
+            seconds=$((seconds + ${value%" seconds ago"}))
+        elif [[ $value == *second\ ago ]]; then
+            seconds=$((seconds + ${value%" second ago"}))
+        elif [[ $value == *minutes ]]; then
+            seconds=$((seconds + ${value%" minutes"} * 60))
+        elif [[ $value == *minute ]]; then
+            seconds=$((seconds + ${value%" minute"} * 60))
+        elif [[ $value == *hours ]]; then
+            seconds=$((seconds + ${value%" hours"} * 3600))
+        elif [[ $value == *hour ]]; then
+            seconds=$((seconds + ${value%" hour"} * 3600))
+        elif [[ $value == *days ]]; then
+            seconds=$((seconds + ${value%" days"} * 86400))
+        elif [[ $value == *day ]]; then
+            seconds=$((seconds + ${value%" day"} * 86400))
+        fi
+    done <<< "$time_str"
+
+    echo "$seconds"
+}
+
+found=false
+# 使用循环处理每个以"peer"开头的段落
+while read -r line; do
+  if [[ $line == "peer: "* ]]; then
+    peer_found=true
+  elif [[ $line == "latest handshake: "* && "$peer_found" == "true" ]]; then
+    latest_handshake=$(echo "$line" | cut -d' ' -f3-)
+
+    seconds_ago=$(time_to_seconds "$latest_handshake")
+
+    if [ $seconds_ago -le 300 ];  # 300 seconds is 5 minutes
+    then
+      found=true
+      break
+    fi
+  fi
+done <<< "$wg_output"
+
+# Check if a matching "peer" was found
+if [ "$found" = false ]; then
+  listening_port=$(echo "$wg_output" | awk '/listening port:/{print $3}')
+  # 提取第3位数字
+  third_digit="${listening_port:2:1}"
+
+  # 将第3位数字加1，如果是9则改为0
+  if [ "$third_digit" == "9" ]; then
+    new_third_digit="0"
+  else
+    new_third_digit=$((third_digit + 1))
+  fi
+
+  # 构建新的端口
+  new_port="${listening_port:0:2}${new_third_digit}${listening_port:3}"
+  echo "新的listening port已设置为 $new_port"
+
+  # 使用wg set命令设置新的listening port
+  #wg set wg0 listen-port "$new_port"
+fi
 ```
 
 ## 致谢
