@@ -126,7 +126,6 @@ ANSWERS
 国内固定端口容易被封，添加flash执行修改端口命令
 ```python
 from flask import Flask
-import sqlite3
 import subprocess
 
 app = Flask(__name__)
