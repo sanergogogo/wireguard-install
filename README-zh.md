@@ -123,7 +123,7 @@ ANSWERS
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
 
 ## 端口被封
-国内固定端口容易被封，添加flash执行修改端口命令
+国内固定端口容易被封，添加Flask执行修改端口命令
 ```python
 from flask import Flask
 import subprocess
