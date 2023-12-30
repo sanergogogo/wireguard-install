@@ -123,8 +123,8 @@ ANSWERS
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
 
 ## 端口被封
-国内固定端口容易被封，添加Flask执行修改端口命令
-```python
+国内固定端口容易被封，使用Flask或者FastApi执行修改端口命令
+```python flask
 from flask import Flask
 import subprocess
 
@@ -142,6 +142,25 @@ if __name__ == '__main__':
     # app.debug = True
     app.run(host='0.0.0.0', port=8888)
 ```
+```python fastapi
+from fastapi import FastAPI
+import subprocess
+
+app = FastAPI()
+
+@app.get("/port/{port}")
+def change_port(port: int):
+    if port < 55801 or port > 55899:
+        return '输入数字55801-55899'
+    a = subprocess.getoutput('sudo wg set wg0 listen-port ' + port)   #执行shell命令
+    return '修改成功'
+
+@app.get("/show")
+def show_port():
+    a = subprocess.getoutput('sudo wg show')   #执行shell命令
+    return a
+```
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8888 --reload
 
 ## 致谢
 
